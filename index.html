@@ -7269,6 +7269,351 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const payment=escHtml(o.payment||'');
       const delivery=escHtml(o.delivery||'');
       const html='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Invoice '+escHtml(id)+'</title><style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#172525;background:#fff}.invoice{max-width:760px;margin:auto;border:1px solid #d9e3e1;border-radius:14px;padding:28px}.top{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #172525;padding-bottom:18px;margin-bottom:18px}.brand{font-size:22px;font-weight:800}.muted{color:#657574}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}.row{padding:8px 0;border-bottom:1px solid #edf1f0}.total{font-size:20px;font-weight:800;margin-top:18px;padding-top:16px;border-top:2px solid #172525}.foot{margin-top:22px;font-size:12px;color:#657574}@media(max-width:600px){body{padding:12px}.invoice{padding:18px}.grid{grid-template-columns:1fr}.top{display:block}}</style></head><body><div class="invoice"><div class="top"><div><div class="brand">CODING FROM DOOARS</div><div class="muted">Bill / Invoice</div></div><div><b>Order ID</b><br>'+escHtml(id)+'</div></div><div class="grid"><div class="row"><b>Customer</b><br>'+customer+'</div><div class="row"><b>Email</b><br>'+email+'</div><div class="row"><b>Phone</b><br>'+phone+'</div><div class="row"><b>Country</b><br>'+country+'</div><div class="row"><b>Address</b><br>'+address+'</div><div class="row"><b>City / State / PIN</b><br>'+city+' / '+st+' / '+pin+'</div><div class="row"><b>Product</b><br>'+product+'</div><div class="row"><b>Payment</b><br>'+payment+'</div><div class="row"><b>Delivery</b><br>'+delivery+'</div></div><div class="total">Amount: '+amount+'</div><div class="foot">This invoice is generated from the Coding From Dooars order record.</div></div>
+
+<!-- CFD FINAL AUTH + FACEBOOK + VISITOR ACTION REPAIR V6 -->
+<style id="CFD-FINAL-AUTH-FACEBOOK-V6">
+/* Keep the Facebook button visually consistent with the existing Google button. */
+.cfd-facebook-login-v6{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:10px 0 0!important;
+  padding:0 16px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  border-radius:12px!important;
+  background:#1877F2!important;
+  color:#fff!important;
+  font-weight:800!important;
+  cursor:pointer!important;
+  transition:filter .2s ease,transform .2s ease!important;
+}
+.cfd-facebook-login-v6:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important}
+.cfd-facebook-login-v6:disabled{opacity:.65!important;cursor:wait!important;transform:none!important}
+.cfd-facebook-login-v6 .cfd-fb-icon-v6{
+  width:21px!important;height:21px!important;min-width:21px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+}
+.cfd-facebook-login-v6 .cfd-fb-icon-v6 svg{width:21px!important;height:21px!important;display:block!important}
+@media(max-width:520px){
+  .cfd-facebook-login-v6{height:50px!important;min-height:50px!important;padding:0 12px!important}
+}
+</style>
+<script id="CFD-FINAL-AUTH-FACEBOOK-V6">
+(function(){
+  'use strict';
+  if(window.__CFD_FINAL_AUTH_FACEBOOK_V6__) return;
+  window.__CFD_FINAL_AUTH_FACEBOOK_V6__=true;
+
+  function getAuth(){
+    try{
+      if(window.cfdFirebaseAuth) return window.cfdFirebaseAuth;
+      if(window.firebase && typeof firebase.auth==='function'){
+        window.cfdFirebaseAuth=firebase.auth();
+        return window.cfdFirebaseAuth;
+      }
+    }catch(e){ console.error('[CFD AUTH V6] auth init:',e); }
+    return null;
+  }
+
+  function getGate(){
+    return document.getElementById('authGate');
+  }
+
+  function openLogin(message){
+    try{
+      if(typeof window.cfdRequireLogin==='function'){
+        window.cfdRequireLogin(message||'Please login to continue.');
+        return true;
+      }
+    }catch(e){ console.error('[CFD AUTH V6] require login:',e); }
+
+    const gate=getGate();
+    if(!gate) return false;
+    gate.classList.add('cfd-show-login');
+    gate.classList.remove('auth-hidden');
+    gate.setAttribute('aria-hidden','false');
+    document.documentElement.classList.remove('cfd-auth-lock');
+    document.body.classList.remove('cfd-auth-lock');
+    try{
+      const sh=gate.shadowRoot;
+      if(sh){
+        ['registerView','forgotView','adminView','successView'].forEach(function(id){
+          const x=sh.getElementById(id); if(x) x.style.display='none';
+        });
+        const login=sh.getElementById('loginView');
+        if(login) login.style.display='block';
+        const pill=sh.getElementById('modePill');
+        if(pill) pill.textContent='USER ACCESS';
+      }
+    }catch(e){}
+    return true;
+  }
+
+  function authReady(){
+    const a=getAuth();
+    return !!(a && a.currentUser);
+  }
+
+  /* ------------------------------------------------------------
+     1) Add a real Firebase Facebook Login button to the existing
+        login screen. No Facebook JS SDK or extra frontend secret.
+     ------------------------------------------------------------ */
+  function installFacebookButton(){
+    const gate=getGate();
+    if(!gate || !gate.shadowRoot) return false;
+    const sh=gate.shadowRoot;
+    const loginView=sh.getElementById('loginView');
+    const google=sh.getElementById('googleLoginBtn');
+    if(!loginView || !google) return false;
+    if(sh.getElementById('facebookLoginBtn')) return true;
+
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.id='facebookLoginBtn';
+    btn.className='cfd-facebook-login-v6';
+    btn.setAttribute('aria-label','Continue with Facebook');
+    btn.innerHTML=
+      '<span class="cfd-fb-icon-v6" aria-hidden="true">'+
+        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img">'+
+          '<path fill="#fff" d="M13.6 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.7v8h3.4Z"/>'+
+        '</svg>'+
+      '</span>'+
+      '<span>Continue with Facebook</span>';
+
+    google.insertAdjacentElement('afterend',btn);
+
+    btn.addEventListener('click',async function(){
+      if(btn.dataset.busy==='1') return;
+      const auth=getAuth();
+      if(!auth || !window.firebase || !firebase.auth || !firebase.auth.FacebookAuthProvider){
+        if(typeof window.toast==='function') window.toast('Facebook Login is not available. Please refresh and try again.','error');
+        return;
+      }
+
+      btn.dataset.busy='1';
+      btn.disabled=true;
+      const old=btn.innerHTML;
+      btn.innerHTML=
+        '<span class="cfd-fb-icon-v6" aria-hidden="true">'+
+        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M13.6 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.7v8h3.4Z"/></svg>'+
+        '</span><span>CONNECTING TO FACEBOOK...</span>';
+
+      try{
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const provider=new firebase.auth.FacebookAuthProvider();
+        /* Only the permissions already enabled in Meta are requested. */
+        provider.addScope('email');
+        provider.setCustomParameters({display:'popup'});
+
+        const result=await auth.signInWithPopup(provider);
+        if(result && result.user){
+          /* Reuse the existing authenticated-entry pipeline. */
+          if(typeof window.__cfdOpenAuthenticatedUser==='function'){
+            await window.__cfdOpenAuthenticatedUser(result.user,'Facebook login successful','Opening your account…');
+          }else if(typeof window.cfdFacebookLoginComplete==='function'){
+            await window.cfdFacebookLoginComplete(result.user);
+          }else{
+            /* The existing auth code exposes openAuthenticatedUser only inside
+               its auth scope, so trigger the normal auth-state path as fallback. */
+            if(typeof window.render==='function'){
+              try{
+                const profile=await (typeof window.cfdLoadProfile==='function'
+                  ? window.cfdLoadProfile(result.user)
+                  : null);
+                if(profile){
+                  window.state=window.state||{};
+                  window.state.userProfile=profile;
+                  window.state.role=(profile.role==='admin'||profile.role==='super_admin')?'admin':'user';
+                  window.state.page=window.state.role==='admin'?'admin':'dashboard';
+                  window.render();
+                }
+              }catch(e){ console.warn('[CFD AUTH V6] profile fallback:',e); }
+            }
+            const gate2=getGate();
+            if(gate2){gate2.classList.add('auth-hidden');gate2.setAttribute('aria-hidden','true');}
+          }
+        }
+      }catch(e){
+        console.error('[CFD FACEBOOK LOGIN V6]',e);
+        let msg=e && e.message ? e.message : 'Facebook Login could not be completed.';
+        const code=String(e && e.code || '');
+        if(code==='auth/popup-closed-by-user') msg='Facebook Login was cancelled.';
+        else if(code==='auth/account-exists-with-different-credential'){
+          msg='This email is already registered with another login method. Please use that method first.';
+        }else if(code==='auth/popup-blocked'){
+          msg='Your browser blocked the Facebook login popup. Please allow popups and try again.';
+        }else if(code==='auth/operation-not-allowed'){
+          msg='Facebook Login is not enabled in Firebase Authentication.';
+        }
+        if(typeof window.toast==='function') window.toast(msg,'error');
+      }finally{
+        btn.dataset.busy='0';
+        btn.disabled=false;
+        btn.innerHTML=old;
+      }
+    });
+    return true;
+  }
+
+  /* Give the existing auth scope a safe public bridge without changing its
+     private implementation. */
+  function installAuthBridge(){
+    if(typeof window.__cfdOpenAuthenticatedUser==='function') return;
+    /* The existing auth-state listener will see the Firebase user. We only
+       need a bridge to wait for it if the private function is inaccessible. */
+    window.cfdFacebookLoginComplete=async function(user){
+      if(!user) return false;
+      const started=Date.now();
+      while(Date.now()-started<12000){
+        try{
+          if(window.__cfdAuthSessionConfirmed===true &&
+             window.cfdFirebaseAuth &&
+             window.cfdFirebaseAuth.currentUser){
+            return true;
+          }
+          if(typeof window.render==='function' && window.state){
+            let profile=null;
+            if(window.cfdFirebaseDb){
+              try{
+                const snap=await window.cfdFirebaseDb.collection('profiles').doc(user.uid).get();
+                if(snap.exists) profile={id:user.uid,uid:user.uid,...(snap.data()||{})};
+              }catch(e){}
+            }
+            if(!profile && window.cfdFirebaseRtdb){
+              try{
+                const snap=await window.cfdFirebaseRtdb.ref('users/'+user.uid).once('value');
+                if(snap.exists()) profile={id:user.uid,uid:user.uid,...(snap.val()||{})};
+              }catch(e){}
+            }
+            profile=profile||{
+              id:user.uid,uid:user.uid,
+              full_name:user.displayName||user.email?.split('@')[0]||'User',
+              email:user.email||'',phone:user.phoneNumber||'',
+              role:'user',status:'active',customer_code:'',
+              created_at:Date.now(),updated_at:Date.now()
+            };
+            window.state.userProfile=profile;
+            window.state.role=(profile.role==='admin'||profile.role==='super_admin')?'admin':'user';
+            window.state.page=window.state.role==='admin'?'admin':'dashboard';
+            window.__cfdAuthSessionConfirmed=true;
+            window.__cfdAuthResolved=true;
+            window.render();
+            const g=getGate();
+            if(g){g.classList.add('auth-hidden');g.classList.remove('cfd-show-login');g.setAttribute('aria-hidden','true');}
+            document.documentElement.classList.add('cfd-auth-ready');
+            document.documentElement.classList.remove('cfd-auth-pending','cfd-auth-lock');
+            document.body.classList.remove('cfd-auth-lock');
+            return true;
+          }
+        }catch(e){ console.warn('[CFD FACEBOOK COMPLETE]',e); }
+        await new Promise(r=>setTimeout(r,150));
+      }
+      return false;
+    };
+  }
+
+  /* ------------------------------------------------------------
+     2) Repair visitor protected actions.
+        Preview stays public. Buy/Download require login.
+     ------------------------------------------------------------ */
+  function unwrap(fn){
+    let x=fn, safety=0;
+    while(x && x.__cfdOriginal && safety++<10) x=x.__cfdOriginal;
+    return x;
+  }
+
+  function installActionGuards(){
+    ['preview','cfdProductPreview'].forEach(function(name){
+      if(typeof window[name]==='function'){
+        /* Existing legacy guard incorrectly blocks visitor previews. */
+        const original=unwrap(window[name]);
+        if(typeof original==='function') window[name]=original;
+      }
+    });
+
+    ['buy','freeDownload','cfdProductDownload'].forEach(function(name){
+      if(typeof window[name]!=='function') return;
+      const original=unwrap(window[name]);
+      if(typeof original!=='function') return;
+      if(original.__cfdFinalProtectedV6) return;
+
+      const wrapped=function(){
+        const a=getAuth();
+        if(!(a && a.currentUser)){
+          openLogin('Please login to continue.');
+          return false;
+        }
+        return original.apply(this,arguments);
+      };
+      wrapped.__cfdFinalProtectedV6=true;
+      wrapped.__cfdOriginal=original;
+      window[name]=wrapped;
+    });
+  }
+
+  /* ------------------------------------------------------------
+     3) Capture action clicks as a final safety net. This catches
+        buttons whose old inline handlers were not wired correctly.
+     ------------------------------------------------------------ */
+  function installClickSafetyNet(){
+    if(window.__CFD_CLICK_SAFETY_V6__) return;
+    window.__CFD_CLICK_SAFETY_V6__=true;
+
+    document.addEventListener('click',function(ev){
+      try{
+        if(authReady()) return;
+        const el=ev.target && ev.target.closest ? ev.target.closest('button,a,[role="button"]') : null;
+        if(!el || el.closest('#authGate')) return;
+
+        const text=String(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+        const onclick=String(el.getAttribute('onclick')||'').toLowerCase();
+
+        const protectedText=
+          /\bbuy\s*now\b/.test(text) ||
+          /\bdownload\b/.test(text) ||
+          /\bview\s+project\b/.test(text) ||
+          /\bopen\s+project\b/.test(text) ||
+          /\bget\s+project\b/.test(text) ||
+          /\bpurchase\b/.test(text);
+
+        const protectedHandler=
+          /\bbuy\s*\(/.test(onclick) ||
+          /\bfreedownload\s*\(/.test(onclick) ||
+          /\bcfdproductdownload\s*\(/.test(onclick);
+
+        if(protectedText || protectedHandler){
+          ev.preventDefault();
+          ev.stopImmediatePropagation();
+          openLogin('Please login to continue.');
+        }
+      }catch(e){ console.warn('[CFD CLICK SAFETY V6]',e); }
+    },true);
+  }
+
+  function boot(){
+    installAuthBridge();
+    installFacebookButton();
+    installActionGuards();
+    installClickSafetyNet();
+  }
+
+  /* Shadow root is created after the auth bootstrap in this single-file app. */
+  boot();
+  [0,50,150,300,600,1000,1800,3000,5000].forEach(function(ms){
+    setTimeout(boot,ms);
+  });
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }
+})();
+</script>
+<!-- END CFD FINAL AUTH + FACEBOOK + VISITOR ACTION REPAIR V6 -->
+
 </body></html>';
       const blob=new Blob([html],{type:'text/html;charset=utf-8'});
       const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Invoice-'+String(id||'order').replace(/[^a-z0-9_-]+/gi,'-')+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Invoice downloaded successfully.','success');
